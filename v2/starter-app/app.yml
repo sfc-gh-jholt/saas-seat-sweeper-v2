@@ -1,0 +1,51 @@
+version: 2
+name: SEAT_SWEEPER
+schema: APP
+ignore:
+- node_modules
+- .env*
+- __pycache__
+- '*.pyc'
+- .next
+- .git
+- snowflake.log
+- app.yml.builder
+- __tests__
+- '*.tsbuildinfo'
+label: Seat Sweeper
+description: Inactive seat opportunity by vendor and department.
+icon: public/icon.svg
+auto_suspend_secs: 300
+install:
+  commands:
+  - - npm
+    - ci
+    - --include=dev
+build:
+  commands:
+  - - npm
+    - run
+    - build
+  - - cp
+    - -r
+    - .next/static
+    - .next/standalone/.next/static
+  - - cp
+    - -r
+    - public
+    - .next/standalone/public
+run:
+  command:
+  - node
+  - .next/standalone/server.js
+default_target: lab
+targets:
+  lab:
+    database: SEAT_SWEEPER_LAB
+    query_warehouse: SEAT_SWEEPER_WH
+    build_eai: SEAT_SWEEPER_BUILD_EAI
+    environment_variables:
+    - name: LAB_DB
+      value: SEAT_SWEEPER_LAB
+    - name: SNOWFLAKE_SDK_QUIET
+      value: 'true'
