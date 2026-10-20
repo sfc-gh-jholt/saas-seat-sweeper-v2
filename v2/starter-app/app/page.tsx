@@ -15,18 +15,19 @@ const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD
 const count = new Intl.NumberFormat("en-US")
 const percent = new Intl.NumberFormat("en-US", { style: "percent", maximumFractionDigits: 1 })
 
-async function fetchOpportunity(): Promise<OpportunityRow[]> {
+async function fetchOpportunity(): Promise<{ rows: OpportunityRow[]; dataAsOf: string | null }> {
   const res = await fetch("/api/opportunity")
   const json = await res.json()
   if (!res.ok || json.error) throw new Error(json.error ?? `HTTP error ${res.status}`)
-  return json.rows
+  return { rows: json.rows, dataAsOf: json.dataAsOf ?? null }
 }
 
 export default function Home() {
   const { data, error, isLoading, isFetching, refetch, dataUpdatedAt } = useQuery({ queryKey: ["opportunity"], queryFn: fetchOpportunity })
   const [search, setSearch] = useState("")
   const [unlinkedOnly, setUnlinkedOnly] = useState(false)
-  const rows = data ?? []
+  const rows = data?.rows ?? []
+  const dataAsOf = data?.dataAsOf
   const summary = summarizeOpportunity(rows)
   const visibleRows = filterOpportunity(rows, search, unlinkedOnly)
   const available = data !== undefined
@@ -50,6 +51,7 @@ export default function Home() {
           </div>
           <div className="opportunity-refresh">
             <span className="opportunity-chip">{dataUpdatedAt ? `Fetched ${new Date(dataUpdatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : "Current snapshot"}</span>
+            {dataAsOf && <span className="opportunity-chip" title="Last successful DT_VENDOR_OPPORTUNITY refresh">Data as of {new Date(dataAsOf).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>}
             <Button variant="outline" size="sm" onClick={() => void refetch()} disabled={isFetching} aria-label="Refresh opportunity data">
               <RefreshCw aria-hidden="true" className={`h-3.5 w-3.5 ${isFetching ? "animate-spin motion-reduce:animate-none" : ""}`} />
               {isFetching ? "Refreshing" : "Refresh"}

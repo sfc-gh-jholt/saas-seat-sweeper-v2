@@ -1,7 +1,7 @@
 # Redeploy and use the agent in your app
 
 ```text
-Perform deployment three: redeploy v2/starter-app with Ask connected to the same `lab` target and service used by deployments one and two. Confirm the target, account and role, that my dashboard personalization is preserved, no runtime egress integration was added, and tests, explicit type check and build pass; then wait for my approval. After deploying, compare the new version in DESCRIBE APPLICATION SERVICE with deployment two and give me the same app URL.
+Perform deployment three: redeploy v2/starter-app with Ask connected to the same `lab` target and service used by deployments one and two. Confirm the target, account, connection and role SEAT_SWEEPER_APP, that my dashboard personalization is preserved, that every API route (including Ask) is wrapped in withObservability and tags its queries with ctx.queryTag, that run.executeAsCaller is still true, no runtime egress integration was added, and tests, explicit type check and build pass; then wait for my approval. After deploying, compare the new version in DESCRIBE APPLICATION SERVICE with deployment two and give me the same app URL.
 ```
 
 Open `/ask` in the deployed app (wait for it to finish starting if you see "service unavailable"). Check that real activity appears while waiting, answers stream, and Thinking expands when the API returns thinking text. Check the result table, SQL/query IDs and contract source disclosures. Stop preserves partial output but does not guarantee the upstream run stops. An interrupted or warning-bearing answer must not be marked complete. Then ask:

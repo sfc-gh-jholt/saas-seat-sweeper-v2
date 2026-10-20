@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import type React from "react"
 import { AppHeader } from "@/components/app-header"
+import { ClientErrorReporter } from "@/components/client-error-reporter"
 import { ThemeProvider } from "@/components/theme-provider"
 import { QueryProvider } from "@/components/query-provider"
 import { APP_TITLE, LOGO_SRC } from "@/lib/constants"
@@ -20,6 +21,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="antialiased">
+        <ClientErrorReporter />
         <ThemeProvider>
           <QueryProvider>
             <AppHeader />

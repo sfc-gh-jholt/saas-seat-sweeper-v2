@@ -30,6 +30,17 @@ GRANT SELECT ON ALL VIEWS IN SCHEMA <% lab_db %>.APP TO ROLE <% lab_role %>;
 GRANT SELECT ON FUTURE VIEWS IN SCHEMA <% lab_db %>.APP TO ROLE <% lab_role %>;
 GRANT DATABASE ROLE SNOWFLAKE.CORTEX_USER TO ROLE <% lab_role %>;
 
+-- Caller's rights (app.yml run.executeAsCaller: true). A caller's-rights query must pass
+-- two checks: the signed-in user's own privileges (granted to PUBLIC so any attendee's
+-- default role works; the data is synthetic) and caller grants on the app's owner role.
+-- View-level grants are in checkpoint_vendor_opportunity.sql, after the view exists.
+GRANT USAGE ON WAREHOUSE <% lab_wh %> TO ROLE PUBLIC;
+GRANT USAGE ON DATABASE <% lab_db %> TO ROLE PUBLIC;
+GRANT USAGE ON SCHEMA <% lab_db %>.APP TO ROLE PUBLIC;
+GRANT CALLER USAGE ON WAREHOUSE <% lab_wh %> TO ROLE <% lab_role %>;
+GRANT CALLER USAGE ON DATABASE <% lab_db %> TO ROLE <% lab_role %>;
+GRANT CALLER USAGE ON SCHEMA <% lab_db %>.APP TO ROLE <% lab_role %>;
+
 -- Build-time egress only (npm install during the remote build).
 CREATE NETWORK RULE IF NOT EXISTS <% lab_db %>.GOVERNANCE.BUILD_EGRESS
   MODE = EGRESS TYPE = HOST_PORT VALUE_LIST = ('registry.npmjs.org:443')

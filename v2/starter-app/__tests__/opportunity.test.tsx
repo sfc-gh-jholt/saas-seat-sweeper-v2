@@ -15,7 +15,9 @@ const rows: OpportunityRow[] = [
 ]
 
 function render(state: Record<string, unknown>) {
-  query.state = { refetch: vi.fn(), isFetching: false, isLoading: false, dataUpdatedAt: 0, ...state }
+  // Tests pass `data` as the row array; the page receives { rows, dataAsOf }.
+  const data = Array.isArray(state.data) ? { rows: state.data, dataAsOf: state.dataAsOf ?? null } : state.data
+  query.state = { refetch: vi.fn(), isFetching: false, isLoading: false, dataUpdatedAt: 0, ...state, data }
   return renderToStaticMarkup(<Home />)
 }
 

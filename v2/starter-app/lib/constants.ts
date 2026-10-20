@@ -14,3 +14,13 @@ export function labDatabase(): string {
   if (!/^[A-Z][A-Z0-9_]*$/.test(db)) throw new Error("LAB_DB must be an unquoted uppercase identifier")
   return db
 }
+
+/**
+ * Lab warehouse (LAB_WH in app.yml). Caller's-rights sessions do not use the service's
+ * query_warehouse, so routes pass this explicitly.
+ */
+export function labWarehouse(): string {
+  const wh = process.env.LAB_WH ?? "SEAT_SWEEPER_WH"
+  if (!/^[A-Z][A-Z0-9_]*$/.test(wh)) throw new Error("LAB_WH must be an unquoted uppercase identifier")
+  return wh
+}

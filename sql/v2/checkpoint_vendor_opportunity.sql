@@ -59,5 +59,10 @@ SELECT contract_id, vendor_name, has_contract, department, inactive_seats,
 FROM <% lab_db %>.APP.DT_VENDOR_OPPORTUNITY;
 
 GRANT SELECT ON VIEW <% lab_db %>.APP.V_VENDOR_OPPORTUNITY TO ROLE <% lab_role %>;
+-- Caller's rights: the signed-in user reads the view, and the app may do so on their behalf.
+GRANT SELECT ON VIEW <% lab_db %>.APP.V_VENDOR_OPPORTUNITY TO ROLE PUBLIC;
+GRANT CALLER SELECT ON VIEW <% lab_db %>.APP.V_VENDOR_OPPORTUNITY TO ROLE <% lab_role %>;
+-- Data freshness ("Data as of" in the app) reads the refresh history as the app's role.
+GRANT MONITOR ON DYNAMIC TABLE <% lab_db %>.APP.DT_VENDOR_OPPORTUNITY TO ROLE <% lab_role %>;
 
 SHOW DYNAMIC TABLES IN SCHEMA <% lab_db %>.APP;

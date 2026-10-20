@@ -119,8 +119,15 @@ function sleep(ms: number): Promise<void> {
  * override is requested. Sets the QUERY_WAREHOUSE_NAME statement parameter so the
  * query runs on the given warehouse without a separate `USE WAREHOUSE` round-trip.
  */
-function warehouseParams(warehouse?: string): { parameters?: Record<string, unknown> } {
-  return warehouse ? { parameters: { QUERY_WAREHOUSE_NAME: warehouse } } : {}
+type StatementOpts = { warehouse?: string; queryTag?: string }
+type WarehouseArg = string | StatementOpts
+
+function warehouseParams(arg?: WarehouseArg): { parameters?: Record<string, unknown> } {
+  const { warehouse, queryTag } = typeof arg === "string" ? { warehouse: arg, queryTag: undefined } : (arg ?? {})
+  const parameters: Record<string, unknown> = {}
+  if (warehouse) parameters.QUERY_WAREHOUSE_NAME = warehouse
+  if (queryTag) parameters.QUERY_TAG = queryTag
+  return Object.keys(parameters).length ? { parameters } : {}
 }
 
 /** SDK bind values for `?` placeholders. Kept as its own type since @types may lag. */
@@ -165,7 +172,7 @@ async function runLongRunningOnConnection(
     statusLogIntervalMs: number
     maxWaitMs?: number
   },
-  warehouse?: string,
+  warehouse?: WarehouseArg,
   binds?: Binds,
 ): Promise<Record<string, any>[]> {
   const queryId = await new Promise<string>((resolve, reject) => {
@@ -495,7 +502,7 @@ function queryWithPool(
   pool: ReturnType<typeof snowflake.createPool>,
   query: string,
   authTag: string,
-  warehouse?: string,
+  warehouse?: WarehouseArg,
   binds?: Binds,
 ): Promise<Record<string, any>[]> {
   return pool.use(async (conn) => {
@@ -529,7 +536,7 @@ function queryWithPoolLongRunning(
   query: string,
   authTag: string,
   longOpts: { pollIntervalMs: number; statusLogIntervalMs: number; maxWaitMs?: number },
-  warehouse?: string,
+  warehouse?: WarehouseArg,
   binds?: Binds,
 ): Promise<Record<string, any>[]> {
   return pool.use(async (conn) => {
@@ -544,7 +551,7 @@ function connectAndQuery(
   config: snowflake.ConnectionOptions,
   query: string,
   authTag: string,
-  warehouse?: string,
+  warehouse?: WarehouseArg,
   binds?: Binds,
 ): Promise<Record<string, any>[]> {
   const conn = snowflake.createConnection(config)
@@ -584,7 +591,7 @@ function connectAndQueryLongRunning(
   query: string,
   authTag: string,
   longOpts: { pollIntervalMs: number; statusLogIntervalMs: number; maxWaitMs?: number },
-  warehouse?: string,
+  warehouse?: WarehouseArg,
   binds?: Binds,
 ): Promise<Record<string, any>[]> {
   const conn = snowflake.createConnection(config)
@@ -618,6 +625,11 @@ export interface QueryOptions {
    * default warehouse is used.
    */
   warehouse?: string
+  /**
+   * Sets the QUERY_TAG statement parameter for this execution so the query can be
+   * found in QUERY_HISTORY (for example a JSON string with route, request id, user).
+   */
+  queryTag?: string
   /**
    * Bind values for `?` placeholders in the SQL. Use this for any user-supplied
    * values to avoid SQL injection, e.g.
@@ -663,7 +675,8 @@ export async function querySnowflake(
   options: QueryOptions = {},
   getRequestHeaders: () => RequestHeaders | Promise<RequestHeaders> = () => ({}),
 ): Promise<Record<string, any>[]> {
-  const { callersRights = false, warehouse, binds } = options
+  const { callersRights = false, warehouse: wh, queryTag, binds } = options
+  const warehouse: WarehouseArg = { warehouse: wh, queryTag }
   const serviceToken = getServiceToken()
 
   const useCallersRights = shouldUseCallersRights(callersRights)
@@ -751,7 +764,8 @@ export async function querySnowflakeLongRunning(
   options: LongRunningQueryOptions = {},
   getRequestHeaders: () => RequestHeaders | Promise<RequestHeaders> = () => ({}),
 ): Promise<Record<string, any>[]> {
-  const { callersRights = false, warehouse, binds, ...longRest } = options
+  const { callersRights = false, warehouse: wh, queryTag, binds, ...longRest } = options
+  const warehouse: WarehouseArg = { warehouse: wh, queryTag }
   const longOpts = resolveLongRunningOpts({ callersRights, ...longRest })
   const serviceToken = getServiceToken()
 
@@ -844,7 +858,7 @@ export function buildCallerRightsToken(callerUserToken: string): string {
 export async function queryWithToken(
   query: string,
   token: string,
-  warehouse?: string,
+  warehouse?: WarehouseArg,
   binds?: Binds,
 ): Promise<Record<string, any>[]> {
   return connectAndQuery({ ...baseConfig(), authenticator: "OAUTH", token }, query, "oauth-token", warehouse, binds)

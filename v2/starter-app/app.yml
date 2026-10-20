@@ -38,6 +38,7 @@ run:
   command:
   - node
   - .next/standalone/server.js
+  executeAsCaller: true
 default_target: lab
 targets:
   lab:
@@ -47,5 +48,7 @@ targets:
     environment_variables:
     - name: LAB_DB
       value: SEAT_SWEEPER_LAB
+    - name: LAB_WH
+      value: SEAT_SWEEPER_WH
     - name: SNOWFLAKE_SDK_QUIET
       value: 'true'

@@ -684,6 +684,17 @@ describe("querySnowflake: retry on terminated connection", () => {
     expect(capturedParams).toEqual({ QUERY_WAREHOUSE_NAME: "MY_WH" })
   })
 
+  it("passes queryTag as the QUERY_TAG statement parameter", async () => {
+    let capturedParams: Record<string, unknown> | undefined
+    mockExecuteImpl = ({ parameters, complete }) => {
+      capturedParams = parameters
+      complete(null, { getQueryId: () => "qid-tag" }, [{ ok: true }])
+    }
+
+    await querySnowflake("SELECT 1", { warehouse: "MY_WH", queryTag: '{"route":"x"}' })
+    expect(capturedParams).toEqual({ QUERY_WAREHOUSE_NAME: "MY_WH", QUERY_TAG: '{"route":"x"}' })
+  })
+
   it("omits statement parameters when no warehouse is given", async () => {
     let capturedParams: Record<string, unknown> | undefined = { sentinel: true }
     mockExecuteImpl = ({ parameters, complete }) => {
