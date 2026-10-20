@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { openAgentStream } from '../../lib/agent'
-import { getRestApiAuthHeader, getSnowflakeBaseUrl } from '../../lib/snowflake'
-vi.mock('../../lib/snowflake', () => ({ getRestApiAuthHeader: vi.fn(), getSnowflakeBaseUrl: vi.fn() }))
+import { buildCallerRightsToken, getRestApiAuthHeader, getServiceToken, getSnowflakeBaseUrl } from '../../lib/snowflake'
+vi.mock('../../lib/snowflake', () => ({ getRestApiAuthHeader: vi.fn(), getSnowflakeBaseUrl: vi.fn(), getServiceToken: vi.fn(), buildCallerRightsToken: vi.fn() }))
 const fetchMock = vi.fn()
 beforeEach(() => {
   vi.clearAllMocks(); vi.stubGlobal('fetch', fetchMock); vi.stubEnv('LAB_DB', 'SEAT_SWEEPER_LAB')
@@ -19,6 +19,15 @@ it('calls only the configured named Agent API using streaming OAuth', async () =
   expect(options.headers.Accept).toBe('text/event-stream')
   expect(options.headers['X-Snowflake-Authorization-Token-Type']).toBe('OAUTH')
   expect(JSON.parse(options.body).stream).toBe(true)
+  expect(options.headers.Authorization).toBe('Bearer test-token')
+})
+it('uses the caller-rights token when a caller token is passed in a deployed app', async () => {
+  fetchMock.mockResolvedValue(new Response('event: response\ndata: {}\n\n', { headers: { 'content-type': 'text/event-stream' } }))
+  vi.mocked(getServiceToken).mockReturnValue('svc')
+  vi.mocked(buildCallerRightsToken).mockReturnValue('svc.caller')
+  await openAgentStream('Q', new AbortController().signal, 'caller')
+  expect(buildCallerRightsToken).toHaveBeenCalledWith('caller')
+  expect(fetchMock.mock.calls[0][1].headers.Authorization).toBe('Bearer svc.caller')
 })
 it('exposes numeric codes but never raw upstream errors', async () => {
   fetchMock.mockResolvedValue(Response.json({ code: '390303', message: 'PRIVATE' }, { status: 401 }))

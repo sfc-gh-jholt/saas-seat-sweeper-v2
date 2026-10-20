@@ -32,7 +32,7 @@ Record the commit. For a facilitated workshop, use the supplied revision (`git c
 | 80–95 | Make a visible change and redeploy the same service |
 | 95–105 | Break |
 | 105–125 | Build and directly test the named agent |
-| 125–155 | Connect Ask and perform deployment three |
+| 125–155 | Use Ask (already in the starter; no redeploy) and review how it reaches the agent |
 | 155–170 | Import Zoom and verify a cited answer |
 | 170–180 | Review evidence, costs and retention |
 

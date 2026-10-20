@@ -51,12 +51,21 @@ def main():
     print(written)
     path = folder / (names['lab_db'] + '.pdf.agent.yaml')
     path.write_text(template)
-    action = 'agent-save' if args.update else 'agent-deploy'
-    print(run(cli + [action, '--connection', args.connection, '--fqn', fqn, '--file-path', str(path)]))
     if args.update:
+        print(run(cli + ['agent-save', '--connection', args.connection, '--fqn', fqn, '--file-path', str(path)]))
         print(run(cli + ['agent-publish', '--connection', args.connection, '--fqn', fqn]))
+    else:
+        # Create with ACCOUNTADMIN: `agent-deploy` uses the connection's default role, which in
+        # attendee accounts (ATTENDEE_ROLE) cannot CREATE AGENT in the lab schema.
+        if '$$' in template:
+            raise ValueError('Agent template must not contain $$')
+        print(run(['snow', 'sql', '--connection', args.connection, '--role', 'ACCOUNTADMIN', '-q',
+                   f"CREATE AGENT IF NOT EXISTS {fqn} FROM SPECIFICATION $${template}$$"]))
     print(run(['snow', 'sql', '--connection', args.connection, '--role', 'ACCOUNTADMIN', '-q',
-               f"GRANT USAGE ON AGENT {fqn} TO ROLE {names['lab_role']}"]))
+               f"GRANT USAGE ON AGENT {fqn} TO ROLE {names['lab_role']}; "
+               # Caller's rights for Ask: the user's own access plus the app's caller grant.
+               f"GRANT USAGE ON AGENT {fqn} TO ROLE PUBLIC; "
+               f"GRANT CALLER USAGE ON AGENT {fqn} TO ROLE {names['lab_role']}"]))
 
 
 if __name__ == '__main__':

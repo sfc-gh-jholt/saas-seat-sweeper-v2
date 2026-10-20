@@ -60,3 +60,9 @@ AS (
 
 GRANT SELECT, REFERENCES ON SEMANTIC VIEW <% lab_db %>.APP.SEAT_SWEEPER_SV TO ROLE <% lab_role %>;
 GRANT USAGE ON CORTEX SEARCH SERVICE <% lab_db %>.APP.CONTRACT_PDF_SEARCH TO ROLE <% lab_role %>;
+-- Caller's rights for Ask: the signed-in user's own access (PUBLIC; synthetic data) and caller
+-- grants so the app may use these tools on their behalf. Agent grants: scripts/deploy_lab_agent.py.
+GRANT SELECT, REFERENCES ON SEMANTIC VIEW <% lab_db %>.APP.SEAT_SWEEPER_SV TO ROLE PUBLIC;
+GRANT USAGE ON CORTEX SEARCH SERVICE <% lab_db %>.APP.CONTRACT_PDF_SEARCH TO ROLE PUBLIC;
+GRANT CALLER SELECT, REFERENCES ON SEMANTIC VIEW <% lab_db %>.APP.SEAT_SWEEPER_SV TO ROLE <% lab_role %>;
+GRANT CALLER USAGE ON CORTEX SEARCH SERVICE <% lab_db %>.APP.CONTRACT_PDF_SEARCH TO ROLE <% lab_role %>;

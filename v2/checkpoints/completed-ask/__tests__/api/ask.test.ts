@@ -43,6 +43,19 @@ it('returns safe pre-stream errors', async () => {
   vi.mocked(openAgentStream).mockRejectedValue(new Error('PRIVATE'))
   expect(await (await POST(post({ question: 'Q' }))).text()).not.toContain('PRIVATE')
 })
+it('explains that the agent is not built yet on a 404', async () => {
+  vi.mocked(openAgentStream).mockRejectedValue(new AgentError('AGENT_REQUEST_FAILED', 404))
+  const response = await POST(post({ question: 'Q' }))
+  expect(response.status).toBe(503)
+  expect(await response.json()).toMatchObject({ code: 'AGENT_NOT_BUILT' })
+})
+it('passes the caller token only when caller rights are available', async () => {
+  vi.mocked(openAgentStream).mockResolvedValue(source(frame('response', { status: 'completed', content: [] })))
+  await POST(post({ question: 'Q' }))
+  expect(vi.mocked(openAgentStream).mock.calls[0][2]).toBeUndefined()
+  await POST(post({ question: 'Q' }, 'application/json', { 'sf-context-current-user-token': 'tok' }))
+  expect(vi.mocked(openAgentStream).mock.calls[1][2]).toBe('tok')
+})
 it('aborts upstream when the browser disconnects', async () => {
   vi.mocked(openAgentStream).mockResolvedValue(new ReadableStream({ start() {} }))
   const response = await POST(post({ question: 'Q' }))

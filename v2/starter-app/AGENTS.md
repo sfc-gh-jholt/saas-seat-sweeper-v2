@@ -37,6 +37,7 @@ The lab's Step 7 reads the app's own telemetry. Every change must keep it workin
 - **Log errors with `logEvent({ event: "route_error", ... })`**, never return raw error text to the browser.
 - **Keep** `components/client-error-reporter.tsx` mounted in `app/layout.tsx` and the `/api/client-log` route.
 - Don't remove `executeAsCaller`, `LAB_WH` or the freshness ("Data as of") query.
+- **Ask** (`/ask`, `app/api/ask/route.ts`, `lib/agent.ts`) calls `SEAT_SWEEPER_AGENT` over the Agent REST API with caller's rights (`buildCallerRightsToken` from the `sf-context-current-user-token` header). Keep the `withObservability("ask")` wrapper, the `"op":"ask"` correlation logs (never log questions, answers or thinking), and the `AGENT_NOT_BUILT` reply for a missing agent.
 
 ## Next Steps
 

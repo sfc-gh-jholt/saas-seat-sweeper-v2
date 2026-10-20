@@ -1,5 +1,6 @@
 import { AgentError, openAgentStream } from '@/lib/agent'
 import { AgentProjection, encodeSse, readSse } from '@/lib/agent-stream'
+import { withObservability } from '@/lib/observability'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -27,8 +28,13 @@ async function readQuestion(request: Request) {
   return question
 }
 
-export async function POST(request: Request) {
-  const correlationId = crypto.randomUUID()
+/**
+ * POST /api/ask: streams an answer from SEAT_SWEEPER_AGENT. Runs as the signed-in user
+ * (caller's rights) when Snowflake passes the caller token; otherwise as the app role.
+ */
+export const POST = withObservability('ask', async (request, ctx) => {
+  const correlationId = ctx.requestId
+  const who = { request_id: ctx.requestId, user: ctx.user, callers_rights: ctx.callersRights }
   const json = (code: string, error: string, status: number) => Response.json({ correlationId, code, error }, { status })
   if (request.headers.get('content-type')?.split(';')[0].trim().toLowerCase() !== 'application/json') return json('BAD_REQUEST', 'Send JSON.', 415)
   // Reject browser cross-site posts without trusting proxy-rewritten request URLs.
@@ -40,10 +46,12 @@ export async function POST(request: Request) {
   const signal = AbortSignal.any([request.signal, abort.signal, timeout])
   const started = Date.now()
   let source: ReadableStream<Uint8Array>
-  try { source = await openAgentStream(question, signal) }
+  try { source = await openAgentStream(question, signal, ctx.callersRights ? request.headers.get('sf-context-current-user-token') ?? undefined : undefined) }
   catch (error) {
     const failure = error instanceof AgentError ? error : new AgentError('ASK_FAILED')
-    console.warn(JSON.stringify({ correlationId, op: 'ask', ms: Date.now() - started, code: failure.code, upstreamStatus: failure.upstreamStatus, upstreamCode: failure.upstreamCode }))
+    console.warn(JSON.stringify({ correlationId, ...who, op: 'ask', ms: Date.now() - started, code: failure.code, upstreamStatus: failure.upstreamStatus, upstreamCode: failure.upstreamCode }))
+    // 404 = SEAT_SWEEPER_AGENT does not exist yet (lab Step 9 builds it; no app redeploy needed).
+    if (failure.upstreamStatus === 404) return json('AGENT_NOT_BUILT', 'The agent is not built yet. Build SEAT_SWEEPER_AGENT in lab Step 9, then ask again; no redeploy is needed.', 503)
     return json(failure.code, 'The agent connection failed. Check app logs using the correlation ID.', timeout.aborted ? 504 : 502)
   }
   const projection = new AgentProjection()
@@ -66,7 +74,7 @@ export async function POST(request: Request) {
           controller.enqueue(encodeSse({ state: projection.state, correlationId }))
           if (projection.terminal) {
             closed = true
-            console.info(JSON.stringify({ correlationId, op: 'ask', ms: Date.now() - started, status: projection.state.status, tools: projection.state.tools.map(tool => tool.name) }))
+            console.info(JSON.stringify({ correlationId, ...who, op: 'ask', ms: Date.now() - started, status: projection.state.status, tools: projection.state.tools.map(tool => tool.name) }))
             controller.close()
             await events.return?.(undefined)
             abort.abort()
@@ -77,7 +85,7 @@ export async function POST(request: Request) {
         if (closed) return
         closed = true
         projection.finish('incomplete', timeout.aborted ? 'The request timed out. Partial results are preserved.' : 'The stream was interrupted. Partial results are preserved.')
-        console.warn(JSON.stringify({ correlationId, op: 'ask', ms: Date.now() - started, status: 'incomplete' }))
+        console.warn(JSON.stringify({ correlationId, ...who, op: 'ask', ms: Date.now() - started, status: 'incomplete' }))
         controller.enqueue(encodeSse({ state: projection.state, correlationId }))
         controller.close()
         abort.abort()
@@ -86,4 +94,4 @@ export async function POST(request: Request) {
     async cancel() { closed = true; abort.abort(); await events.return?.(undefined) },
   })
   return new Response(stream, { headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache, no-transform', 'X-Accel-Buffering': 'no', 'X-Correlation-ID': correlationId } })
-}
+})
