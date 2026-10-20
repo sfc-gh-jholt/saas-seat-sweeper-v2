@@ -47,11 +47,17 @@ CREATE SEMANTIC VIEW IF NOT EXISTS <% lab_db %>.APP.SEAT_SWEEPER_SV
 
 -- Unstructured tool: imported and parsed PDF pages only.
 -- Require document readiness before running this file; never replace an existing service to force freshness.
+-- PRIMARY KEY re-embeds only changed pages; arctic-embed-l-v2.0 for retrieval quality (fixed at create);
+-- REQUEST_LOGGING feeds SNOWFLAKE.LOCAL.GET_AI_OBSERVABILITY_EVENTS; AUTO_SUSPEND stops idle serving (min 1800s).
 CREATE CORTEX SEARCH SERVICE IF NOT EXISTS <% lab_db %>.APP.CONTRACT_PDF_SEARCH
   ON content
+  PRIMARY KEY (source_id)
   ATTRIBUTES vendor_name, relative_path, page_number
   WAREHOUSE = <% lab_wh %>
   TARGET_LAG = '1 minute'
+  EMBEDDING_MODEL = 'snowflake-arctic-embed-l-v2.0'
+  REQUEST_LOGGING = TRUE
+  AUTO_SUSPEND = 1800
   COMMENT = 'seat-sweeper-contract-pdf-v1'
 AS (
   SELECT source_id, source_title, vendor_name, relative_path, page_number, content

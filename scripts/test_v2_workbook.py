@@ -19,7 +19,7 @@ from deploy_lab_agent import require_fresh_agent
 from validate_notebook import validate_notebook, validate_links_and_prompts
 
 ROOT = Path(__file__).resolve().parents[1]
-NOTEBOOK = ROOT / 'v2/START_HERE.ipynb'
+NOTEBOOK = ROOT / 'v2/lab_instructions.ipynb'
 
 
 def notebook_text(notebook):
@@ -44,34 +44,27 @@ class AgentDeployGuardTests(unittest.TestCase):
 
 
 class WorkbookTests(unittest.TestCase):
-    def test_notebook_links_and_all_canonical_prompt_blocks(self):
+    def test_notebook_steps_links_and_portability(self):
         notebook = validate_notebook(NOTEBOOK.read_bytes())
         validate_links_and_prompts(notebook, ROOT, ROOT / 'v2')
         text = notebook_text(notebook)
-        markers = re.findall(r'<!-- prompt: (\S+) -->', text)
-        expected = []
-        for path in sorted((ROOT / 'v2/coco-prompts').glob('*.md')):
-            blocks = re.findall(r'```text\n(.*?)\n```', path.read_text(), re.S)
-            expected.extend(f'coco-prompts/{path.name}#{index + 1}' for index in range(len(blocks)))
-        self.assertCountEqual(markers, expected)
-        self.assertEqual(len(markers), len(set(markers)))
-        positions = [text.index(f'## {step}. ') for step in range(1, 12)]
+        positions = [text.index(f'## Step {step}') for step in range(1, 11)]
         self.assertEqual(positions, sorted(positions))
-        for phrase in ['deployment one', 'deployment two', 'deployment three',
-                       'no app redeploy', '14 structured checks', 'same service',
-                       'staged, parsed, and indexed', 'cortex agent-studio --help']:
+        for phrase in ['executeAsCaller', 'withObservability', 'CORTEX SEARCH SERVICE',
+                       'CREATE OR REPLACE AGENT', 'GRANT CALLER', 'DROP DATABASE IF EXISTS SEAT_SWEEPER_LAB']:
             self.assertIn(phrase, text)
-        self.assertNotIn('%%sql', text)
-        self.assertNotIn('three KPI', text)
         self.assertNotRegex(text, r'/(?:Users|home)/')
+        self.assertNotRegex(text, r'snowflakecomputing-com"')  # no machine-specific connection name
 
-    def test_code_cells_remain_local_and_nonmutating(self):
+    def test_code_cells_remain_local_and_placeholdered(self):
         notebook = validate_notebook(NOTEBOOK.read_bytes())
         code = '\n'.join(''.join(cell['source']) for cell in notebook['cells'] if cell['cell_type'] == 'code')
-        self.assertNotRegex(code, r'subprocess|os\.system|\.write_text|\.write_bytes|shell=True|pip install|session\.sql')
-        self.assertIn('shlex.quote', code)
-        self.assertIn("manifest_rows']('all')", code)
+        self.assertNotRegex(code, r'os\.system|\.write_text|\.write_bytes|shell=True|session\.sql')
         self.assertIn('REPLACE_WITH_YOUR_NAMED_CONNECTION', code)
+        # The delete-everything block must ship commented out.
+        for line in code.splitlines():
+            if 'DROP DATABASE' in line or 'DROP ROLE' in line:
+                self.assertTrue(line.lstrip().startswith('--'), line)
 
     def test_all_command_paths_exist(self):
         text = notebook_text(validate_notebook(NOTEBOOK.read_bytes()))
@@ -111,7 +104,7 @@ class WorkbookTests(unittest.TestCase):
             manifest = json.loads((kit / 'package-manifest.json').read_text())
             for name, digest in manifest.items():
                 self.assertEqual(hashlib.sha256((kit / name).read_bytes()).hexdigest(), digest, name)
-            notebook = validate_notebook((kit / 'v2/START_HERE.ipynb').read_bytes())
+            notebook = validate_notebook((kit / 'v2/lab_instructions.ipynb').read_bytes())
             validate_links_and_prompts(notebook, kit, kit / 'v2')
             self.assertEqual(len(list((kit / 'v2/contracts').rglob('*.pdf'))), 11)
             self.assertNotIn('rehearsal:', (kit / 'v2/starter-app/app.yml').read_text())

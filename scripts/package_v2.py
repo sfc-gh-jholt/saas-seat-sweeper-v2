@@ -16,7 +16,7 @@ SCRIPTS = ['contract_pipeline.py','generate_contract_pdfs.py','test_contract_pip
 
 def main():
     manifest_rows('all')
-    notebook = validate_notebook((ROOT / 'v2/START_HERE.ipynb').read_bytes())
+    notebook = validate_notebook((ROOT / 'v2/lab_instructions.ipynb').read_bytes())
     validate_links_and_prompts(notebook, ROOT, ROOT / 'v2')
     files = {}
     paths = [ROOT / 'README.md', ROOT / '.gitignore'] + list((ROOT / 'v2').rglob('*')) + list((ROOT / 'sql/v2').rglob('*')) + [ROOT / 'scripts' / name for name in SCRIPTS]
@@ -40,7 +40,7 @@ def main():
             if re.search(r'/Users/|/home/[\w.-]+/|[A-Z0-9]+_[A-Z0-9_]*REHEARSAL[A-Z0-9_]*\.|[a-z0-9-]+\.snowflakecomputing\.app|BEGIN .*PRIVATE KEY', text, re.I) and path.name != 'package_v2.py':
                 raise ValueError('Private identifier in ' + str(rel))
         files[rel.as_posix()] = data
-    required = ['v2/START_HERE.ipynb','scripts/validate_notebook.py','v2/README.md','sql/v2/names.default.env','sql/v2/setup.sh','scripts/contract_pipeline.py','v2/contracts/manifest.json','v2/agent/seat_sweeper_agent.agent.yaml.tmpl']
+    required = ['v2/lab_instructions.ipynb','scripts/validate_notebook.py','v2/README.md','sql/v2/names.default.env','sql/v2/setup.sh','scripts/contract_pipeline.py','v2/contracts/manifest.json','v2/agent/seat_sweeper_agent.agent.yaml.tmpl']
     for name in required:
         assert name in files, name
     assert sum(name.endswith('.pdf') for name in files) == 11

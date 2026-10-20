@@ -1,6 +1,6 @@
 # Seat Sweeper V2
 
-**Start with [the participant workbook](v2/START_HERE.ipynb) in CoCo Desktop.**
+**Start with [the participant workbook](v2/lab_instructions.ipynb) in CoCo Desktop.**
 
 A focused workshop: load synthetic data and PDFs, build dynamic tables, deploy a Next.js starter, personalize and redeploy it, test a named Cortex Agent, connect Ask, then import a new PDF without redeploying the app.
 
@@ -10,7 +10,7 @@ cd saas-seat-sweeper-v2
 coco .
 ```
 
-Open `v2/START_HERE.ipynb`. If `coco` is not on PATH, open this folder in CoCo Desktop or use its Command Palette to install the command. Record `git rev-parse HEAD` before starting; use a facilitator-supplied revision when running as a group.
+Open `v2/lab_instructions.ipynb`. If `coco` is not on PATH, open this folder in CoCo Desktop or use its Command Palette to install the command. Record `git rev-parse HEAD` before starting; use a facilitator-supplied revision when running as a group.
 
 ## Requirements
 
@@ -20,7 +20,7 @@ See [prerequisites and agenda](v2/README.md). All terminal commands start at the
 
 ## What is included
 
-- `v2/START_HERE.ipynb`: participant journey with embedded CoCo prompts.
+- `v2/lab_instructions.ipynb`: participant journey with embedded CoCo prompts.
 - `v2/starter-app/`: opportunity dashboard and Ask placeholder.
 - `v2/checkpoints/`: completed Ask integration recovery files.
 - `v2/contracts/`: ten baseline synthetic PDFs and held-out Zoom PDF.

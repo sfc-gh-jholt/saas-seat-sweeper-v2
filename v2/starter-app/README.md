@@ -1,6 +1,6 @@
 # Seat Sweeper starter app
 
-Follow the [participant workbook](../START_HERE.ipynb). Deploy this starter unchanged first; personalize it only after deployment one. Ask is deliberately a placeholder until the integration exercise.
+Follow the [participant workbook](../lab_instructions.ipynb). Deploy this starter unchanged first; personalize it only after deployment one. Ask is deliberately a placeholder until the integration exercise.
 
 ## Keep the supplied foundation
 

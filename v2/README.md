@@ -1,6 +1,6 @@
 # Seat Sweeper: participant workbook
 
-**Open [START_HERE.ipynb](START_HERE.ipynb) in CoCo Desktop.** This repository contains only the V2 data, dynamic tables, app and agent workshop.
+**Open [lab_instructions.ipynb](lab_instructions.ipynb) in CoCo Desktop.** This repository contains only the V2 data, dynamic tables, app and agent workshop.
 
 ## Get the kit
 
@@ -11,7 +11,7 @@ git rev-parse HEAD
 coco .
 ```
 
-Record the commit. For a facilitated workshop, use the supplied revision (`git checkout --detach <approved-commit>`) before starting. Open `v2/START_HERE.ipynb`. If `coco` is unavailable, open the folder in CoCo Desktop or install its command through the Command Palette.
+Record the commit. For a facilitated workshop, use the supplied revision (`git checkout --detach <approved-commit>`) before starting. Open `v2/lab_instructions.ipynb`. If `coco` is unavailable, open the folder in CoCo Desktop or install its command through the Command Palette.
 
 ## Prerequisites
 

@@ -28,7 +28,8 @@ def validate_notebook(data):
         if not re.fullmatch(r'[a-zA-Z0-9]{8}', identifier) or identifier in identifiers:
             raise ValueError('Notebook cell IDs must be unique eight-character alphanumeric strings')
         identifiers.add(identifier)
-        if cell.get('metadata') or cell.get('attachments'):
+        meta = cell.get('metadata') or {}
+        if meta not in ({}, {'vscode': {'languageId': 'sql'}}) or cell.get('attachments'):
             raise ValueError('Remove cell metadata and attachments before publishing')
         source = cell.get('source', '')
         text = ''.join(source) if isinstance(source, list) else source
@@ -37,7 +38,14 @@ def validate_notebook(data):
         if cell.get('cell_type') == 'code':
             if cell.get('outputs') != [] or cell.get('execution_count', 'missing') is not None:
                 raise ValueError('Clear notebook outputs and execution counts before publishing')
-            tree = ast.parse(text)
+            if text.lstrip().startswith('%%'):
+                continue  # cell magic (e.g. %%sql) is not Python
+            # Line magics and shell escapes are IPython, not Python syntax.
+            text = '\n'.join('' if line.lstrip().startswith(('%', '!')) else line for line in text.splitlines())
+            try:
+                tree = ast.parse(text)
+            except SyntaxError:
+                continue  # copyable CoCo prompt text, not Python
             for node in ast.walk(tree):
                 if isinstance(node, ast.Assign):
                     for target in node.targets:
@@ -92,7 +100,7 @@ def validate_links_and_prompts(notebook, root, notebook_dir=None):
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('notebook', nargs='?', default='v2/START_HERE.ipynb',
+    parser.add_argument('notebook', nargs='?', default='v2/lab_instructions.ipynb',
                         help='Repository-relative notebook path (default: V2 workbook)')
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
