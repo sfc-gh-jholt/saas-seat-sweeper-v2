@@ -24,10 +24,10 @@ SELECT
   ea.status,
   ea.last_active_date,
   a.monthly_cost_per_seat
-FROM <% lab_db %>.RAW.EMPLOYEE_ASSETS ea
-JOIN <% lab_db %>.RAW.EMPLOYEES e ON e.emp_id = ea.emp_id
-JOIN <% lab_db %>.RAW.ASSETS a ON a.asset_id = ea.asset_id
-LEFT JOIN <% lab_db %>.RAW.CONTRACTS c ON c.contract_id = a.contract_id;
+FROM <% lab_db %>.OPS.EMPLOYEE_ASSETS ea
+JOIN <% lab_db %>.OPS.EMPLOYEES e ON e.emp_id = ea.emp_id
+JOIN <% lab_db %>.OPS.ASSETS a ON a.asset_id = ea.asset_id
+LEFT JOIN <% lab_db %>.OPS.CONTRACTS c ON c.contract_id = a.contract_id;
 
 -- CURRENT_DATE stays in WHERE, not SELECT. Eligibility advances at refresh
 -- time even as the source dates age. TARGET_LAG is a freshness target, not cron.

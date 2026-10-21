@@ -1,0 +1,16 @@
+ASSET_ID,ASSET_NAME,MONTHLY_COST_PER_SEAT,ASSET_TYPE,CONTRACT_ID
+1,GitHub Copilot,39.00,License,1
+2,Figma Full Seat,75.00,License,2
+3,Figma Viewer Seat,15.00,License,2
+4,Datadog Infrastructure,15.00,License,3
+5,Datadog APM,30.00,License,3
+6,Jira Enterprise,14.50,License,4
+7,Snowflake Compute,0.00,License,5
+8,M3 MacBook Pro,0.00,Hardware,6
+9,Dell Monitor,0.00,Hardware,7
+10,Slack Pro,8.75,License,8
+11,Notion Enterprise,20.00,License,9
+12,1Password Business,7.99,License,10
+13,VS Code Enterprise,0.00,License,
+14,Zoom Pro,15.99,License,
+15,GitHub Enterprise,21.00,License,1

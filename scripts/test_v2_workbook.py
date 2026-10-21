@@ -149,7 +149,7 @@ class StructuredPipelineTests(unittest.TestCase):
 
     @staticmethod
     def local_sql(sql):
-        return sql.replace('<% lab_db %>.RAW.', '').replace('<% lab_db %>.APP.', '').replace('CURRENT_DATE()', "'2026-10-19'")
+        return sql.replace('<% lab_db %>.OPS.', '').replace('<% lab_db %>.RAW.', '').replace('<% lab_db %>.APP.', '').replace('CURRENT_DATE()', "'2026-10-19'")
 
     def build(self):
         for name, query in re.findall(r'CREATE (?:DYNAMIC TABLE|VIEW) <% lab_db %>\.APP\.(\w+).*?\nAS\n(.*?);', self.checkpoint, re.S):

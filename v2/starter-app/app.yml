@@ -52,3 +52,13 @@ targets:
       value: SEAT_SWEEPER_WH
     - name: SNOWFLAKE_SDK_QUIET
       value: 'true'
+    # Postgres host, login and CA are per-account secrets written by setup (scripts/pg_setup.py secret).
+    secrets:
+    - name: PG_APP_LOGIN
+      secret: SEAT_SWEEPER_LAB.GOVERNANCE.PG_APP_LOGIN
+    - name: PG_HOST
+      secret: SEAT_SWEEPER_LAB.GOVERNANCE.PG_HOST
+    - name: PG_CA_CERT
+      secret: SEAT_SWEEPER_LAB.GOVERNANCE.PG_CA_CERT
+    external_access_integrations:
+    - SEAT_SWEEPER_PG_EAI

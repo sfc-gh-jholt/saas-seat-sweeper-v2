@@ -26,6 +26,7 @@ export function AppHeader() {
         <nav className="ml-6 flex gap-4 text-sm">
           <Link href="/" className="hover:underline">Opportunity</Link>
           <Link href="/ask" className="hover:underline">Ask</Link>
+          <Link href="/seats" className="hover:underline">Seats</Link>
         </nav>
         <div className="ml-auto">
           <ThemeToggle />

@@ -12,7 +12,7 @@ CREATE SEMANTIC VIEW IF NOT EXISTS <% lab_db %>.APP.SEAT_SWEEPER_SV
   TABLES (
     opportunity AS <% lab_db %>.APP.V_VENDOR_OPPORTUNITY
       COMMENT = 'Inactive paid seats (30+ days) by vendor contract and department. Opportunity to review, not realized savings.',
-    contracts AS <% lab_db %>.RAW.CONTRACTS
+    contracts AS <% lab_db %>.OPS.CONTRACTS
       PRIMARY KEY (contract_id)
       COMMENT = 'Vendor contracts with renewal dates and auto-renew flags.'
   )

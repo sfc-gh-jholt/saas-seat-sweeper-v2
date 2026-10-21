@@ -9,10 +9,10 @@ WITH source_assignments AS (
     COALESCE(c.vendor_name, a.asset_name) AS vendor_name,
     c.contract_id IS NOT NULL AS has_contract,
     e.department, ea.status, ea.last_active_date, a.monthly_cost_per_seat
-  FROM <% lab_db %>.RAW.EMPLOYEE_ASSETS ea
-  JOIN <% lab_db %>.RAW.EMPLOYEES e ON e.emp_id = ea.emp_id
-  JOIN <% lab_db %>.RAW.ASSETS a ON a.asset_id = ea.asset_id
-  LEFT JOIN <% lab_db %>.RAW.CONTRACTS c ON c.contract_id = a.contract_id
+  FROM <% lab_db %>.OPS.EMPLOYEE_ASSETS ea
+  JOIN <% lab_db %>.OPS.EMPLOYEES e ON e.emp_id = ea.emp_id
+  JOIN <% lab_db %>.OPS.ASSETS a ON a.asset_id = ea.asset_id
+  LEFT JOIN <% lab_db %>.OPS.CONTRACTS c ON c.contract_id = a.contract_id
 ), eligible AS (
   SELECT * FROM source_assignments
   WHERE status = 'Inactive'
@@ -49,7 +49,7 @@ checks AS (
       OR inactive_seats <= 0 OR inactive_seats IS NULL)
   UNION ALL
   SELECT 7, 'Source join neither loses nor multiplies assignments',
-    (SELECT COUNT(*) FROM <% lab_db %>.RAW.EMPLOYEE_ASSETS),
+    (SELECT COUNT(*) FROM <% lab_db %>.OPS.EMPLOYEE_ASSETS),
     (SELECT COUNT(*) FROM source_assignments)
   UNION ALL
   SELECT 8, 'Enrichment retains assignment count',
@@ -70,21 +70,21 @@ checks AS (
          OR NOT EQUAL_NULL(e.monthly_opportunity, v.monthly_opportunity))
   UNION ALL
   SELECT 11, 'Raw employee keys are unique', 0,
-    (SELECT COUNT(*) FROM (SELECT emp_id FROM <% lab_db %>.RAW.EMPLOYEES
+    (SELECT COUNT(*) FROM (SELECT emp_id FROM <% lab_db %>.OPS.EMPLOYEES
       GROUP BY 1 HAVING COUNT(*) > 1))
   UNION ALL
   SELECT 12, 'Raw asset keys are unique', 0,
-    (SELECT COUNT(*) FROM (SELECT asset_id FROM <% lab_db %>.RAW.ASSETS
+    (SELECT COUNT(*) FROM (SELECT asset_id FROM <% lab_db %>.OPS.ASSETS
       GROUP BY 1 HAVING COUNT(*) > 1))
   UNION ALL
   SELECT 13, 'Raw contract keys are unique', 0,
-    (SELECT COUNT(*) FROM (SELECT contract_id FROM <% lab_db %>.RAW.CONTRACTS
+    (SELECT COUNT(*) FROM (SELECT contract_id FROM <% lab_db %>.OPS.CONTRACTS
       GROUP BY 1 HAVING COUNT(*) > 1))
   UNION ALL
   SELECT 14, 'Every assignment has employee and asset dimensions', 0,
-    (SELECT COUNT(*) FROM <% lab_db %>.RAW.EMPLOYEE_ASSETS ea
-      LEFT JOIN <% lab_db %>.RAW.EMPLOYEES e ON e.emp_id = ea.emp_id
-      LEFT JOIN <% lab_db %>.RAW.ASSETS a ON a.asset_id = ea.asset_id
+    (SELECT COUNT(*) FROM <% lab_db %>.OPS.EMPLOYEE_ASSETS ea
+      LEFT JOIN <% lab_db %>.OPS.EMPLOYEES e ON e.emp_id = ea.emp_id
+      LEFT JOIN <% lab_db %>.OPS.ASSETS a ON a.asset_id = ea.asset_id
       WHERE e.emp_id IS NULL OR a.asset_id IS NULL)
 )
 SELECT check_name, expected, actual, expected = actual AS passed

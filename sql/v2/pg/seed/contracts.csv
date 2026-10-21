@@ -1,0 +1,11 @@
+CONTRACT_ID,VENDOR_NAME,RENEWAL_DATE,AUTO_RENEW
+1,GitHub Copilot Enterprise,2026-03-15,True
+2,Figma Enterprise,2026-07-01,True
+3,Datadog Pro,2026-01-31,False
+4,Jira Cloud Enterprise,2026-09-15,True
+5,Snowflake,2026-11-01,True
+6,M3 MacBook Pro Hardware Pool,,False
+7,Dell U2723QE Monitor Pool,,False
+8,Slack Pro,2026-05-15,True
+9,Notion Enterprise,2026-08-01,True
+10,1Password Business,2026-06-30,True
