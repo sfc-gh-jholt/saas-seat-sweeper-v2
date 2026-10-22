@@ -17,7 +17,7 @@ ALTER APPLICATION SERVICE IF EXISTS SEAT_SWEEPER_LAB.APP.SEAT_SWEEPER SUSPEND;
 -- its data permanently and stops its billing.
 EXECUTE IMMEDIATE $$
 BEGIN
-  CALL SNOWFLAKE.POSTGRES.DROP_MIRROR('seat_sweeper_ops', drop_target_database => TRUE);
+  CALL SNOWFLAKE.POSTGRES.DROP_MIRROR(mirror_name => 'seat_sweeper_ops', drop_target_database => TRUE);
   RETURN 'mirror dropped';
 EXCEPTION
   WHEN OTHER THEN RETURN 'no mirror to drop: ' || SQLERRM;

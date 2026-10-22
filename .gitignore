@@ -24,3 +24,4 @@ output/
 out/
 *.log
 app.yml.builder
+.venv/

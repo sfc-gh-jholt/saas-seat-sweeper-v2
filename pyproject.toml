@@ -1,0 +1,14 @@
+[project]
+name = "saas-seat-sweeper-v2-lab"
+version = "0.1.0"
+description = "Python environment for the SaaS Seat Sweeper V2 lab notebooks"
+requires-python = ">=3.10"
+dependencies = [
+    "snowflake-connector-python",
+    "pandas",
+    "matplotlib",
+    "ipykernel",
+]
+
+[tool.uv]
+package = false

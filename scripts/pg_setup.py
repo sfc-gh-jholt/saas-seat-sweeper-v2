@@ -31,6 +31,7 @@ import configparser
 import json
 import os
 import secrets
+import socket
 import subprocess
 import sys
 import time
@@ -97,7 +98,19 @@ def ensure_instance(args):
                    '--storage', str(args.storage), '--postgres-version', args.version,
                    '--comment', 'Seat Sweeper system of record', connection=args.connection)
     pg_connect('--ensure-ready', '--instance-name', args.instance, connection=args.connection)
-    print(f'pg_host={service_host(args.instance.lower())}')
+    host = service_host(args.instance.lower())
+    # A new instance reports READY before its hostname is in public DNS (seen taking >10 min); psql fails until it is.
+    deadline = time.time() + 1200
+    while True:
+        try:
+            socket.getaddrinfo(host, 5432)
+            break
+        except socket.gaierror:
+            if time.time() > deadline:
+                raise SystemExit(f'{host} still does not resolve after 1200s. Re-run setup.sh; every step is idempotent.')
+            log(f'Waiting for DNS: {host}')
+            time.sleep(15)
+    print(f'pg_host={host}')
 
 
 def access_vars(args):

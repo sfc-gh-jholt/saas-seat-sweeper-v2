@@ -21,8 +21,13 @@ snow sql --connection "$connection" --role ACCOUNTADMIN "${vars[@]}" \
   -f "$here/00_setup.sql" -f "$here/01_seed.sql"
 
 # Stage the real documents now; the attendee builds parsing in the pipeline segment.
-python3 "$here/../../scripts/contract_pipeline.py" landing --connection "$connection" --names "$names"
-python3 "$here/../../scripts/contract_pipeline.py" stage --connection "$connection" --names "$names" --group baseline
+PYTHON_BIN="$here/../../.venv/bin/python"
+if [ ! -f "$PYTHON_BIN" ]; then
+  PYTHON_BIN="python3"
+fi
+
+"$PYTHON_BIN" "$here/../../scripts/contract_pipeline.py" landing --connection "$connection" --names "$names"
+"$PYTHON_BIN" "$here/../../scripts/contract_pipeline.py" stage --connection "$connection" --names "$names" --group baseline
 
 # Postgres system of record. Each step is idempotent; KEY=VALUE lines on stdout become -D vars.
 pg="$here/../../scripts/pg_setup.py"
@@ -31,16 +36,16 @@ pg_service=seat_sweeper_pg   # pg_connect.py names the service after the lowerca
 lab_db=$(grep '^lab_db=' "$names" | cut -d= -f2)
 lab_role=$(grep '^lab_role=' "$names" | cut -d= -f2)
 
-python3 "$pg" instance --connection "$connection" --instance "$pg_instance" >/dev/null
+"$PYTHON_BIN" "$pg" instance --connection "$connection" --instance "$pg_instance" >/dev/null
 pg_vars=(-D "pg_instance=$pg_instance")
-while IFS= read -r line; do pg_vars+=(-D "$line"); done < <(python3 "$pg" access-vars --connection "$connection" --instance "$pg_instance")
+while IFS= read -r line; do pg_vars+=(-D "$line"); done < <("$PYTHON_BIN" "$pg" access-vars --connection "$connection" --instance "$pg_instance")
 snow sql --connection "$connection" --role ACCOUNTADMIN "${vars[@]}" "${pg_vars[@]}" -f "$here/06_app_postgres_access.sql"
 
-python3 "$pg" seed --service "$pg_service"
-python3 "$pg" app-login --service "$pg_service"
-python3 "$pg" secret --connection "$connection" --service "$pg_service" --db "$lab_db" --role "$lab_role"
+"$PYTHON_BIN" "$pg" seed --service "$pg_service"
+"$PYTHON_BIN" "$pg" app-login --service "$pg_service"
+"$PYTHON_BIN" "$pg" secret --connection "$connection" --service "$pg_service" --db "$lab_db" --role "$lab_role"
 
-mirror_line=$(python3 "$pg" mirror --connection "$connection" --instance "$pg_instance")
+mirror_line=$("$PYTHON_BIN" "$pg" mirror --connection "$connection" --instance "$pg_instance")
 snow sql --connection "$connection" --role ACCOUNTADMIN "${vars[@]}" -D "$mirror_line" -f "$here/05_ops_views.sql"
 echo "Setup complete. Postgres mirror: ${mirror_line#mirror_db=}. Suspend the instance when idle:"
 echo "  ALTER POSTGRES INSTANCE $pg_instance SUSPEND;"
