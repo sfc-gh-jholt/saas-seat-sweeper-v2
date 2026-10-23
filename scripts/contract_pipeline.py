@@ -1,6 +1,7 @@
 """Import immutable workshop PDFs and operate their incremental pipeline.
 
-Uses the installed Snowflake CLI and Python standard library only.
+The CLI uses the installed Snowflake CLI and Python standard library only; lab_setup.py passes
+a session instead so the same steps run in a Snowsight notebook.
 Run --help for commands. No credentials are read or printed by this script.
 """
 import argparse
@@ -61,20 +62,34 @@ def manifest_rows(group):
 
 
 class Pipeline:
-    def __init__(self, connection, names):
+    def __init__(self, connection, names, sf=None):
         self.names = names
         self.db = names['lab_db']
         self.raw = self.db + '.RAW'
         self.app = self.db + '.APP'
         self.stage = self.raw + '.CONTRACT_PDF_STAGE'
+        # sf is a lab_setup.Snowflake (Snowsight notebook session or connector); without it, use the snow CLI.
+        self.sf = sf
         self.base = ['snow', 'sql', '--connection', connection, '--role', 'ACCOUNTADMIN',
                      '--warehouse', names['lab_wh'], '--database', self.db, '--schema', 'APP', '--format', 'JSON']
 
     def sql(self, query):
+        if self.sf is not None:
+            return self.sf.rows(query)
         result = subprocess.run(self.base + ['-q', query], capture_output=True, text=True, timeout=180)
         if result.returncode:
             raise RuntimeError(result.stderr.strip())
         return json.loads(result.stdout)
+
+    def put(self, local_path, stage_dir):
+        if self.sf is not None:
+            return self.sf.put(local_path, stage_dir)
+        self.sql(f"PUT {literal('file://' + str(local_path))} {stage_dir} AUTO_COMPRESS=FALSE OVERWRITE=FALSE")
+
+    def get(self, stage_path, local_dir):
+        if self.sf is not None:
+            return self.sf.get(stage_path, local_dir)
+        self.sql(f"GET {stage_path} 'file://{local_dir}/'")
 
     def render(self, text):
         for key, value in self.names.items():
@@ -181,14 +196,13 @@ class Pipeline:
             existing = [r for r in existing if r['name'].endswith('/' + relative)]
             if existing:
                 with tempfile.TemporaryDirectory() as directory:
-                    self.sql(f"GET @{self.stage}/{relative} 'file://{directory}/'")
+                    self.get(f'@{self.stage}/{relative}', directory)
                     remote = Path(directory) / Path(relative).name
                     if not remote.exists() or hashlib.sha256(remote.read_bytes()).hexdigest() != row['sha256']:
                         raise RuntimeError('Existing staged bytes differ; use a new version path: ' + relative)
                 print('Unchanged PDF: ' + relative)
                 continue
-            uri = 'file://' + str(CONTRACTS / relative)
-            self.sql(f"PUT {literal(uri)} @{self.stage}/{Path(relative).parent.as_posix()}/ AUTO_COMPRESS=FALSE OVERWRITE=FALSE")
+            self.put(CONTRACTS / relative, f'@{self.stage}/{Path(relative).parent.as_posix()}/')
             print('Uploaded PDF: ' + relative)
         self.sql(f'ALTER STAGE {self.stage} REFRESH')
 

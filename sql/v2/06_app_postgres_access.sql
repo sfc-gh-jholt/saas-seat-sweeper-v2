@@ -35,7 +35,7 @@ GRANT USAGE ON INTEGRATION SEAT_SWEEPER_PG_EAI TO ROLE <% lab_role %>;
 -- The app's secrets live in GOVERNANCE; the role needs schema usage to resolve them at deploy.
 GRANT USAGE ON SCHEMA <% lab_db %>.GOVERNANCE TO ROLE <% lab_role %>;
 
--- The app's Postgres login (secret PG_APP_LOGIN) is created by scripts/pg_setup.py secret,
--- which reads the generated password from ~/.pgpass so it is never typed or printed.
+-- The app's Postgres login (secret PG_APP_LOGIN) is created by scripts/pg_setup.py, which
+-- generates the password and writes it straight to the secret so it is never typed or printed.
 
 SELECT 'Postgres access ready' AS status, '<% pg_host %>' AS pg_host;

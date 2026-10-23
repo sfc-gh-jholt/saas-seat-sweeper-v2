@@ -49,7 +49,7 @@ CREATE INDEX IF NOT EXISTS seat_actions_created_at ON public.seat_actions (creat
 -- Least privilege for the app's login. The managed `application` role is not used: Snowflake makes it a
 -- member of snowflake_write, so it can modify and truncate every table regardless of grants here.
 -- The app logs in as seat_sweeper_app instead: read the seed tables, append decisions, nothing else.
--- It is created without LOGIN; scripts/pg_setup.py app-login sets its password and enables login.
+-- It is created without LOGIN; scripts/pg_setup.py sets its password and enables login.
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'seat_sweeper_app') THEN
