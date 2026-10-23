@@ -68,10 +68,13 @@ def rows(cur, sql, params=None):
 def pg_connect(*args, connection):
     if not (SKILL_DIR / 'scripts' / 'pg_connect.py').is_file():
         raise SystemExit(f'pg_connect.py not found under {SKILL_DIR}; set PG_SKILL_DIR.')
-    cmd = ['uv', 'run', '--project', str(SKILL_DIR), 'python', str(SKILL_DIR / 'scripts' / 'pg_connect.py'),
+    cmd = ['uv', 'run', '--frozen', '--project', str(SKILL_DIR), 'python', str(SKILL_DIR / 'scripts' / 'pg_connect.py'),
            *args, '--snowflake-connection', connection, '--use-role', 'ACCOUNTADMIN']
+    # The skill lives in the read-only app bundle, so uv builds its environment in a user cache instead.
+    env = {**os.environ}
+    env.setdefault('UV_PROJECT_ENVIRONMENT', str(Path.home() / '.cache' / 'seat-sweeper' / 'pg-skill-venv'))
     # Output goes to stderr so it never mixes with KEY=VALUE lines; the script itself never prints passwords.
-    subprocess.run(cmd, check=True, stdout=sys.stderr)
+    subprocess.run(cmd, check=True, stdout=sys.stderr, env=env)
 
 
 def has_pgpass_user(host, user):

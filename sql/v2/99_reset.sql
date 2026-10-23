@@ -33,14 +33,44 @@ DROP INTEGRATION IF EXISTS "Seat Sweeper";
 DROP WAREHOUSE IF EXISTS SEAT_SWEEPER_WH;
 DROP ROLE IF EXISTS SEAT_SWEEPER_APP;
 
+-- Lab sign-in: the PAT and the allow-all network policy on your user, if you created them
+-- with these names. A session signed in with that PAT cannot remove PATs, so if CoCo uses
+-- the PAT, this reports "PAT not removed" and continues; remove the token in Snowsight
+-- (your profile > Programmatic access tokens) or let it expire. Unsetting the policy
+-- still stops it from signing in.
+-- The policy is unset only if it is still the lab's, so a policy you set yourself is kept.
+EXECUTE IMMEDIATE $$
+DECLARE
+  me STRING DEFAULT CURRENT_USER();
+  policy STRING;
+  pat_result STRING;
+BEGIN
+  BEGIN
+    ALTER USER IDENTIFIER(:me) REMOVE PROGRAMMATIC ACCESS TOKEN SEAT_SWEEPER_LAB_PAT;
+    pat_result := 'PAT removed';
+  EXCEPTION
+    WHEN OTHER THEN pat_result := 'PAT not removed: ' || SQLERRM;
+  END;
+  SHOW PARAMETERS LIKE 'NETWORK_POLICY' IN USER IDENTIFIER(:me);
+  SELECT "value" INTO :policy FROM TABLE(RESULT_SCAN(LAST_QUERY_ID()));
+  IF (UPPER(policy) = 'SEAT_SWEEPER_LAB_ALLOW_ALL') THEN
+    ALTER USER IDENTIFIER(:me) UNSET NETWORK_POLICY;
+  END IF;
+  DROP NETWORK POLICY IF EXISTS SEAT_SWEEPER_LAB_ALLOW_ALL;
+  RETURN pat_result || '; allow-all policy removed';
+END;
+$$;
+
 -- Verify: every line should return 0 rows.
 SHOW DATABASES LIKE 'SEAT_SWEEPER%';
 SHOW WAREHOUSES LIKE 'SEAT_SWEEPER_WH';
 SHOW ROLES LIKE 'SEAT_SWEEPER_APP';
 SHOW INTEGRATIONS LIKE 'SEAT_SWEEPER%';
 SHOW POSTGRES INSTANCES LIKE 'SEAT_SWEEPER_PG';
-SHOW NETWORK POLICIES LIKE 'SEAT_SWEEPER_PG_POLICY';
+SHOW NETWORK POLICIES LIKE 'SEAT_SWEEPER%';
+SHOW USER PROGRAMMATIC ACCESS TOKENS;
 
 -- Local files are not touched. For a truly fresh run, also delete your clone
 -- (or run `git clean -fdx` inside it) so .env.local and node_modules are rebuilt,
--- and remove the [seat_sweeper_pg] block from ~/.pg_service.conf and its ~/.pgpass lines.
+-- remove the [seat_sweeper_pg] block from ~/.pg_service.conf and its ~/.pgpass lines,
+-- and remove the lab PAT connection from ~/.snowflake/connections.toml (its token no longer signs in).
